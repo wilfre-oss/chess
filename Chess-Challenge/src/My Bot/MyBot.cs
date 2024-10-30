@@ -1,21 +1,15 @@
 ﻿using ChessChallenge.API;
-using Microsoft.CodeAnalysis.Diagnostics;
+using ChessChallenge.Evaluation;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
+using System.Data;
+
 
 
 public class MyBot : IChessBot
 {
-    public const int PawnValue = 100;
-    public const int KnightValue = 300;
-    public const int BishopValue = 320;
-    public const int RookValue = 500;
-    public const int QueenValue = 900;
-
-    Board board;
+    public int Evaluate(Board board) => Evaluation.Evaluate(board);
     
+    Board board;
 
     public Move Think(Board boardIn, Timer timer)
     {
@@ -25,7 +19,7 @@ public class MyBot : IChessBot
         Move bestMove = moves[0];
         int alpha = -int.MaxValue;
         int beta = int.MaxValue;
-
+        
         foreach (Move move in moves)
         {
             board.MakeMove(move);
@@ -41,27 +35,7 @@ public class MyBot : IChessBot
         return bestMove;
     }
 
-    static int Evaluate(Board board)
-    {
-        int whiteEval = CountMaterial(true, board);
-        int blackEval = CountMaterial(false, board);
-
-        int eval = (whiteEval - blackEval) * (board.IsWhiteToMove ? 1 : -1);
-        
-
-        return eval;  
-    }
-
-    static int CountMaterial(bool isWhite, Board board)
-    {
-        int material = 0;
-        material += PawnValue * board.GetPieceList(PieceType.Pawn, isWhite).Count;
-        material += KnightValue * board.GetPieceList(PieceType.Knight, isWhite).Count;
-        material += BishopValue * board.GetPieceList(PieceType.Bishop, isWhite).Count;
-        material += RookValue * board.GetPieceList(PieceType.Rook, isWhite).Count;
-        material += QueenValue * board.GetPieceList(PieceType.Queen, isWhite).Count;
-        return material;
-    }
+    
 
     int Search(int depth)
     {
