@@ -2,62 +2,43 @@
 using ChessChallenge.Evaluation;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 
 
 
 public class MyBot : IChessBot
 {
-    public static int Evaluate(Board board) => Evaluation.Evaluate(board);
-    static IEnumerable<Move> GenerateMoves(Board board) => MoveGenerator.GenerateMoves(board);
+    
     
     Board board;
+    MoveGenerator moveGenerator;
 
     public Move Think(Board boardIn, Timer timer)
     {
-        int depth = 6;
         board = boardIn;
-        Move[] moves = boardIn.GetLegalMoves();
-        Move bestMove = moves[0];
+        Move bestMove = Move.NullMove;
+        moveGenerator = new MoveGenerator();
         int alpha = -int.MaxValue;
         int beta = int.MaxValue;
         
-        foreach (Move move in GenerateMoves(board))
+        for(int depth = 1; depth < 7; depth++)
         {
-            board.MakeMove(move);
-            int eval = -Search(depth - 1, alpha, beta);
-            board.UndoMove(move);
-            if (eval > alpha)
+            foreach (Move move in GenerateMoves(board))
             {
-                alpha = eval;
-                bestMove = move;
+                board.MakeMove(move);
+                int eval = -Search(depth - 1, alpha, beta);
+                board.UndoMove(move);
+                if (eval > alpha)
+                {
+                    alpha = eval;
+                    bestMove = move;
+                }
             }
+            alpha = -int.MaxValue;
         }
 
         return bestMove;
-    }
-
-    
-
-    int Search(int depth)
-    {
-        if (depth == 0) return Evaluate(board);
-
-        Move[] moves = board.GetLegalMoves();
-        if (moves.Length == 0) return board.IsInCheck() ? int.MinValue : 0;
-
-        int bestEval = int.MinValue;
-
-        foreach (Move move in moves)
-        {
-            board.MakeMove(move);
-            int eval = -Search(depth - 1);
-            board.UndoMove(move);
-
-            bestEval = Math.Max(bestEval, eval);
-        }
-
-        return bestEval;
     }
 
     int Search(int depth, int alpha, int beta)
@@ -76,6 +57,7 @@ public class MyBot : IChessBot
             int eval = -Search(depth - 1, -beta, -alpha);
             board.UndoMove(move);
             if(eval >= beta) {
+                moveGenerator.History[ColorIndex, move.StartSquare.Index, move.TargetSquare.Index] = depth * depth;
                 return beta;
             };
 
@@ -83,4 +65,8 @@ public class MyBot : IChessBot
         }
         return alpha;
     }
+    public static int Evaluate(Board board) => Evaluation.Evaluate(board);
+    IEnumerable<Move> GenerateMoves(Board board) => moveGenerator.GenerateMoves(board);
+
+    int ColorIndex => board.IsWhiteToMove ? 0 : 1;
 }
