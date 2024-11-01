@@ -1,26 +1,28 @@
 ﻿using ChessChallenge.API;
 using ChessChallenge.Evaluation;
 using System;
+using System.Collections.Generic;
 using System.Data;
 
 
 
 public class MyBot : IChessBot
 {
-    public int Evaluate(Board board) => Evaluation.Evaluate(board);
+    public static int Evaluate(Board board) => Evaluation.Evaluate(board);
+    static IEnumerable<Move> GenerateMoves(Board board) => MoveGenerator.GenerateMoves(board);
     
     Board board;
 
     public Move Think(Board boardIn, Timer timer)
     {
-        int depth = 5;
+        int depth = 6;
         board = boardIn;
         Move[] moves = boardIn.GetLegalMoves();
         Move bestMove = moves[0];
         int alpha = -int.MaxValue;
         int beta = int.MaxValue;
         
-        foreach (Move move in moves)
+        foreach (Move move in GenerateMoves(board))
         {
             board.MakeMove(move);
             int eval = -Search(depth - 1, alpha, beta);
@@ -63,10 +65,12 @@ public class MyBot : IChessBot
         
         if (depth == 0) return Evaluate(board);
 
-        if (board.IsInCheckmate()) return -(100_000 + depth);
         
+        if (board.IsInCheckmate()) return -(100_000 + depth);
 
-        foreach (Move move in board.GetLegalMoves())
+        if (board.IsDraw()) return 0;
+        
+        foreach (Move move in GenerateMoves(board))
         {
             board.MakeMove(move);
             int eval = -Search(depth - 1, -beta, -alpha);
