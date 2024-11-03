@@ -1,72 +1,106 @@
 ﻿using ChessChallenge.API;
 using ChessChallenge.Evaluation;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 
 
 
 public class MyBot : IChessBot
 {
-    
-    
     Board board;
     MoveGenerator moveGenerator;
+
+    Move bestMove;
+    Move bestMoveInIteration;
+    int iterationDepth;
 
     public Move Think(Board boardIn, Timer timer)
     {
         board = boardIn;
-        Move bestMove = Move.NullMove;
+        bestMove = Move.NullMove;
+        bestMoveInIteration = Move.NullMove;
         moveGenerator = new MoveGenerator();
         int alpha = -int.MaxValue;
         int beta = int.MaxValue;
-        
-        for(int depth = 1; depth < 7; depth++)
-        {
-            foreach (Move move in GenerateMoves(board))
-            {
-                board.MakeMove(move);
-                int eval = -Search(depth - 1, alpha, beta);
-                board.UndoMove(move);
-                if (eval > alpha)
-                {
-                    alpha = eval;
-                    bestMove = move;
-                }
-            }
-            alpha = -int.MaxValue;
-        }
+        int eval = 0;
 
+        for (iterationDepth = 1; iterationDepth <= 6; iterationDepth++)
+        {
+            eval = Search(iterationDepth, alpha, beta);
+            bestMove = bestMoveInIteration;
+        }
+        Console.WriteLine("depth: " + (iterationDepth - 1));
+        Console.WriteLine(bestMove + " eval: " + eval);
+        Console.WriteLine("Time to get move: " + timer.MillisecondsElapsedThisTurn + " ms");
         return bestMove;
     }
 
     int Search(int depth, int alpha, int beta)
     {
         
-        if (depth == 0) return Evaluate(board);
+        if (depth == 0) return QuiscenceSearch(alpha, beta);
 
-        
-        if (board.IsInCheckmate()) return -(100_000 + depth);
-
-        if (board.IsDraw()) return 0;
-        
-        foreach (Move move in GenerateMoves(board))
+        List<Move> moves = GenerateMoves(board);
+        if (moves.Count == 0)
         {
+            return (board.IsInCheck()) ? 
+                -(100_000 + depth) : 0;
+
+        }
+        
+        foreach (Move move in moves)
+        {
+
             board.MakeMove(move);
             int eval = -Search(depth - 1, -beta, -alpha);
             board.UndoMove(move);
             if(eval >= beta) {
-                moveGenerator.History[ColorIndex, move.StartSquare.Index, move.TargetSquare.Index] = depth * depth;
+                if (!move.IsCapture)
+                    moveGenerator.History[ColorIndex, move.StartSquare.Index, move.TargetSquare.Index] += depth * depth;
                 return beta;
             };
 
-            alpha = Math.Max(alpha, eval);
+            if(eval > alpha)
+            {
+                alpha = eval;
+                
+                if (depth == iterationDepth)
+                {
+                    bestMoveInIteration = move;
+                }
+            }
+        }
+        return alpha;
+    }
+
+    int QuiscenceSearch(int alpha, int beta)
+    {
+        int eval = Evaluate(board);
+
+        if (eval >= beta)
+            return beta;
+        if (eval > alpha)
+            alpha = eval;
+
+
+        foreach (Move move in GenerateMoves(board, true))
+        {
+            board.MakeMove(move);
+            eval = -QuiscenceSearch(-beta, -alpha);
+            board.UndoMove(move);
+            if (eval >= beta)
+                return beta;
+            if (eval > alpha)
+                alpha = eval;
         }
         return alpha;
     }
     public static int Evaluate(Board board) => Evaluation.Evaluate(board);
-    IEnumerable<Move> GenerateMoves(Board board) => moveGenerator.GenerateMoves(board);
+    List<Move> GenerateMoves(Board board, bool quietMoves = false) => moveGenerator.GenerateMoves(board, quietMoves);
 
     int ColorIndex => board.IsWhiteToMove ? 0 : 1;
 }

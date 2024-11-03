@@ -15,29 +15,45 @@
         {
             History = new int[2,64,64];
         }
-        public IEnumerable<Move> GenerateMoves(Board board)
+        public List<Move> GenerateMoves(Board board, bool quietMoves = false)
         {
+            int colorIndex = board.IsWhiteToMove ? 0 : 1;
+            Move[] legalMoves = board.GetLegalMoves(quietMoves);
+            var movesWithScores = new List<(Move move, int score)>(legalMoves.Length);
 
-            
-            return board.GetLegalMoves().Select(move =>
+            foreach (Move move in legalMoves)
             {
-                int score = History[board.IsWhiteToMove ? 0 : 1, move.StartSquare.Index, move.TargetSquare.Index];
+                int score = History[colorIndex, move.StartSquare.Index, move.TargetSquare.Index];
 
                 if (move.IsCapture)
                 {
+                    // Adjust score based on capture value
                     score += 10 * MaterialValue(move.CapturePieceType) - MaterialValue(move.MovePieceType);
                 }
 
-                if (board.SquareIsAttackedByOpponent(move.TargetSquare))
+                // Penalize moves that place the piece on an attacked square
+                if (score > 0 && board.SquareIsAttackedByOpponent(move.TargetSquare))
                 {
-                    score -= MaterialValue(move.MovePieceType);
+                    score -= 50;
                 }
 
-                return (move, score);
-            })
-                .OrderByDescending(x => x.score)
-                .Select(x => x.move);
+                movesWithScores.Add((move, score));
+            }
+
+            // Sort moves based on score (descending)
+            movesWithScores.Sort((a, b) => b.score.CompareTo(a.score));
+
+            // Return moves after sorting
+            var sortedMoves = new List<Move>(movesWithScores.Count);
+            foreach (var (move, _) in movesWithScores)
+            {
+                sortedMoves.Add(move);
+            }
+
+            return sortedMoves;
         }
+
+        
 
     }
 }
