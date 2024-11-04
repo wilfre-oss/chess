@@ -31,10 +31,10 @@ namespace ChessChallenge.Evaluation
             /*
             if (p == 1)
             {
-            whiteEval += MobilityScore(board);
-            board.ForceSkipTurn();
-            blackEval += MobilityScore(board);
-            board.UndoSkipTurn();
+                whiteEval += MobilityScore(board);
+                board.ForceSkipTurn();
+                blackEval += MobilityScore(board);
+                board.UndoSkipTurn();
             }
             else
             {
