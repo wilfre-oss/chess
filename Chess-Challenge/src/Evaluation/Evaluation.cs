@@ -1,6 +1,8 @@
 ﻿using ChessChallenge.API;
+using Raylib_cs;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,7 +18,7 @@ namespace ChessChallenge.Evaluation
         public const int RookValue = 500;
         public const int QueenValue = 900;
 
-        public int [] PieceSquarePawns = {
+        public static int [] PieceSquarePawns = {
                 0,  0,  0,  0,  0,  0,  0,  0,
                 50, 50, 50, 50, 50, 50, 50, 50,
                 10, 10, 20, 30, 30, 20, 10, 10,
@@ -27,7 +29,7 @@ namespace ChessChallenge.Evaluation
                 0,  0,  0,  0,  0,  0,  0,  0 
         };
 
-        public int[] PieceSquareKnights = {
+        public static int[] PieceSquareKnights = {
             -50,-40,-30,-30,-30,-30,-40,-50,
             -40,-20,  0,  0,  0,  0,-20,-40,
             -30,  0, 10, 15, 15, 10,  0,-30,
@@ -38,7 +40,7 @@ namespace ChessChallenge.Evaluation
             -50,-40,-30,-30,-30,-30,-40,-50
         };
 
-        public int[] PieceSquareBishops = {
+        public static int[] PieceSquareBishops = {
             -20,-10,-10,-10,-10,-10,-10,-20,
             -10,  0,  0,  0,  0,  0,  0,-10,
             -10,  0,  5, 10, 10,  5,  0,-10,
@@ -49,7 +51,7 @@ namespace ChessChallenge.Evaluation
             -20,-10,-10,-10,-10,-10,-10,-20
         };
 
-        public int[] PieceSquareRooks = {
+        public static int[] PieceSquareRooks = {
             0,  0,  0,  0,  0,  0,  0,  0,
             5, 10, 10, 10, 10, 10, 10,  5,
             -5,  0,  0,  0,  0,  0,  0, -5,
@@ -60,7 +62,7 @@ namespace ChessChallenge.Evaluation
             0,  0,  0,  5,  5,  0,  0,  0
         };
 
-        public int[] PieceSquareQueen = {
+        public static int[] PieceSquareQueen = {
             -20,-10,-10, -5, -5,-10,-10,-20,
             -10,  0,  0,  0,  0,  0,  0,-10,
             -10,  0,  5,  5,  5,  5,  0,-10,
@@ -71,7 +73,7 @@ namespace ChessChallenge.Evaluation
             -20,-10,-10, -5, -5,-10,-10,-20
         };
 
-        public int[] PieceSquareKingMid= {
+        public static int[] PieceSquareKingMid= {
             -30,-40,-40,-50,-50,-40,-40,-30,
             -30,-40,-40,-50,-50,-40,-40,-30,
             -30,-40,-40,-50,-50,-40,-40,-30,
@@ -82,7 +84,7 @@ namespace ChessChallenge.Evaluation
             20, 30, 10,  0,  0, 10, 30, 20
         };
 
-        public int[] PieceSquareKingEnd = {
+        public static int[] PieceSquareKingEnd = {
             -50,-40,-30,-20,-20,-30,-40,-50,
             -30,-20,-10,  0,  0,-10,-20,-30,
             -30,-10, 20, 30, 30, 20,-10,-30,
@@ -104,6 +106,7 @@ namespace ChessChallenge.Evaluation
             int blackEval = CountMaterial(false, board);
 
             int eval = (whiteEval - blackEval);
+            CountPieceSquare(true, board);
 
 
             return eval * (board.IsWhiteToMove ? 1 : -1);
@@ -121,17 +124,11 @@ namespace ChessChallenge.Evaluation
         }
 
 
-        static int CountPieceSquare(bool isWhite, Board board)
+        static void CountPieceSquare(bool isWhite, Board board)
         {
-
-
-
-
-
-
-
-
-
+            //pawns
+            int pawns = 0;
+            Console.WriteLine(board.GetPieceBitboard(PieceType.Pawn, isWhite));
 
 
         }
