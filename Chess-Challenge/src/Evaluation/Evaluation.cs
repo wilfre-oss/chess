@@ -21,30 +21,21 @@ namespace ChessChallenge.Evaluation
         static int PawnMaterial(Board board, bool white) => PawnValue * board.GetPieceList(PieceType.Pawn, white).Count;  
         public static int Evaluate(Board board)
         {
-            int p = (board.IsWhiteToMove ? 1 : -1);
+            bool isWhite = board.IsWhiteToMove;
 
             //Material evaulation
-            int whiteEval = CountMaterial(true, board);
-            int blackEval = CountMaterial(false, board);
+            int myEval = CountMaterial(isWhite, board);
+            int opponentEval = CountMaterial(!isWhite, board);
 
             //Mobillity evaluation
-            /*
-            if (p == 1)
-            {
-                whiteEval += MobilityScore(board);
-                board.ForceSkipTurn();
-                blackEval += MobilityScore(board);
-                board.UndoSkipTurn();
-            }
-            else
-            {
-                blackEval += MobilityScore(board);
-                board.ForceSkipTurn();
-                whiteEval += MobilityScore(board);
-                board.UndoSkipTurn();s
-            }
-            */
-            return (whiteEval - blackEval) * p;
+            
+            myEval += MobilityScore(board);
+            board.ForceSkipTurn();
+            opponentEval += MobilityScore(board);
+            board.UndoSkipTurn();
+            
+            
+            return myEval - opponentEval;
         }
 
         static int CountMaterial(bool isWhite, Board board)
@@ -60,12 +51,22 @@ namespace ChessChallenge.Evaluation
 
         static int MobilityScore(Board board)
         {
-            int score = board.GetLegalMoves().Length;
+            Move[] moves = board.GetLegalMoves();
+
+            int score = 0;
+
+            for(int i = 0; i < moves.Length; i++)
+            {
+                if (moves[i].MovePieceType == PieceType.Pawn ||
+                    moves[i].MovePieceType == PieceType.Queen)
+                    continue;
+                score++;
+            }
 
             return (int)Math.Sqrt(score) * 10;
         }
 
-        static int EndgameForceKingToCorner(Square friendlyKingSquare, Square oppenentKingSquare)
+        static int ForceKingToCorner(Square friendlyKingSquare, Square oppenentKingSquare)
         {
             int eval = 0;
             

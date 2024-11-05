@@ -15,7 +15,7 @@ namespace ChessChallenge.Evaluation
         {
             PAWN => 100,
             KNIGHT => 300,
-            BISHOP => 300,
+            BISHOP => 320,
             ROOK => 500,
             QUEEN => 900,
             _ => 0,

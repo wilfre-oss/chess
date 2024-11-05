@@ -12,15 +12,17 @@ using System.Diagnostics.CodeAnalysis;
 public class MyBot : IChessBot
 {
     Board board;
+    Timer timer;
     MoveGenerator moveGenerator;
 
     Move bestMove;
     Move bestMoveInIteration;
     int iterationDepth;
 
-    public Move Think(Board boardIn, Timer timer)
+    public Move Think(Board boardIn, Timer timerIn)
     {
         board = boardIn;
+        timer = timerIn;
         bestMove = Move.NullMove;
         bestMoveInIteration = Move.NullMove;
         moveGenerator = new MoveGenerator();
@@ -28,15 +30,22 @@ public class MyBot : IChessBot
         int beta = int.MaxValue;
         int eval = 0;
 
-        for (iterationDepth = 1; iterationDepth <= 6; iterationDepth++)
+        try
         {
-            eval = Search(iterationDepth, alpha, beta);
-            bestMove = bestMoveInIteration;
+            for (iterationDepth = 1; ; iterationDepth++)
+            {
+                eval = Search(iterationDepth, alpha, beta);
+                bestMove = bestMoveInIteration;
+            }
+        } catch
+        {
+            Console.WriteLine("depth: " + (iterationDepth - 1));
+            Console.WriteLine(bestMove + " eval: " + eval);
+            Console.WriteLine("Time to get move: " + timer.MillisecondsElapsedThisTurn + " ms");
+
+            return bestMove;
         }
-        Console.WriteLine("depth: " + (iterationDepth - 1));
-        Console.WriteLine(bestMove + " eval: " + eval);
-        Console.WriteLine("Time to get move: " + timer.MillisecondsElapsedThisTurn + " ms");
-        return bestMove;
+        
     }
 
     int Search(int depth, int alpha, int beta)
@@ -49,7 +58,12 @@ public class MyBot : IChessBot
         {
             return (board.IsInCheck()) ? 
                 -(100_000 + depth) : 0;
+        }
 
+        if (iterationDepth - depth > 3 &&
+            timer.MillisecondsElapsedThisTurn > 1000)
+        {
+            throw new Exception();
         }
         
         foreach (Move move in moves)
