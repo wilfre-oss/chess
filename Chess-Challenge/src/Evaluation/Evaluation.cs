@@ -205,38 +205,29 @@ namespace ChessChallenge.Evaluation
         static int CountPieceSquare(bool isWhite, Board board)
         {
             int pieceSquareValue = 0;
-            PieceList plistPawn = board.GetPieceList(PieceType.Pawn, isWhite);
-            PieceList plistKnight = board.GetPieceList(PieceType.Knight, isWhite);
-            PieceList plistBishop = board.GetPieceList(PieceType.Bishop, isWhite);
-            PieceList plistRook = board.GetPieceList(PieceType.Rook, isWhite);
-            PieceList plistQueen = board.GetPieceList(PieceType.Queen, isWhite);
-            PieceList plistKing = board.GetPieceList(PieceType.King, isWhite);
-
-            
 
             if (isWhite)
             {
-                pieceSquareValue += LoopPieceList(plistPawn, PieceSquarePawnsWhite);
-                pieceSquareValue += LoopPieceList(plistKnight, PieceSquareKnightsWhite);
-                pieceSquareValue += LoopPieceList(plistBishop, PieceSquareBishopsWhite);
-                pieceSquareValue += LoopPieceList(plistRook, PieceSquareRooksWhite);
-                pieceSquareValue += LoopPieceList(plistQueen, PieceSquareQueenWhite);
+                pieceSquareValue += LoopPieceList(board.GetPieceList(PieceType.Pawn, isWhite), PieceSquarePawnsWhite);
+                pieceSquareValue += LoopPieceList(board.GetPieceList(PieceType.Knight, isWhite), PieceSquareKnightsWhite);
+                pieceSquareValue += LoopPieceList(board.GetPieceList(PieceType.Bishop, isWhite), PieceSquareBishopsWhite);
+                pieceSquareValue += LoopPieceList(board.GetPieceList(PieceType.Rook, isWhite), PieceSquareRooksWhite);
+                pieceSquareValue += LoopPieceList(board.GetPieceList(PieceType.Queen, isWhite), PieceSquareQueenWhite);
                 pieceSquareValue += PieceSquareKingMidWhite[board.GetKingSquare(isWhite).Index];
 
                // pieceSquareValue += LoopPieceList(plistKing, PieceSquareKingMidWhite);
             }
             else
             {
-                pieceSquareValue += LoopPieceList(plistPawn, PieceSquarePawnsBlack);
-                pieceSquareValue += LoopPieceList(plistKnight, PieceSquareKnightsBlack);
-                pieceSquareValue += LoopPieceList(plistBishop, PieceSquareBishopsBlack);
-                pieceSquareValue += LoopPieceList(plistRook, PieceSquareRooksBlack);
-                pieceSquareValue += LoopPieceList(plistQueen, PieceSquareQueenBlack);
-                pieceSquareValue += PieceSquareKingMidBlack[board.GetKingSquare(isWhite).Index];
-                
+                pieceSquareValue += LoopPieceList(board.GetPieceList(PieceType.Pawn, isWhite), PieceSquarePawnsBlack);
+                pieceSquareValue += LoopPieceList(board.GetPieceList(PieceType.Knight, isWhite), PieceSquareKnightsBlack);
+                pieceSquareValue += LoopPieceList(board.GetPieceList(PieceType.Bishop, isWhite), PieceSquareBishopsBlack);
+                pieceSquareValue += LoopPieceList(board.GetPieceList(PieceType.Rook, isWhite), PieceSquareRooksBlack);
+                pieceSquareValue += LoopPieceList(board.GetPieceList(PieceType.Queen, isWhite), PieceSquareQueenBlack);
+                pieceSquareValue += PieceSquareKingMidWhite[board.GetKingSquare(isWhite).Index];
+
                 //pieceSquareValue += LoopPieceList(plistKing, PieceSquareKingMidBlack);
             }
-            System.Console.WriteLine("pieceSquareValue: " + pieceSquareValue+ " " + isWhite );
             return pieceSquareValue;
         }
 
