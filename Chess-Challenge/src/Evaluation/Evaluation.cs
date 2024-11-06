@@ -179,6 +179,8 @@ namespace ChessChallenge.Evaluation
         {
             int whiteEval = CountMaterial(true, board);
             int blackEval = CountMaterial(false, board);
+            whiteEval += CountPieceSquare(true, board);
+            blackEval += CountPieceSquare(false, board);
 
 
 
@@ -210,6 +212,8 @@ namespace ChessChallenge.Evaluation
             PieceList plistQueen = board.GetPieceList(PieceType.Queen, isWhite);
             PieceList plistKing = board.GetPieceList(PieceType.King, isWhite);
 
+            
+
             if (isWhite)
             {
                 pieceSquareValue += LoopPieceList(plistPawn, PieceSquarePawnsWhite);
@@ -232,7 +236,7 @@ namespace ChessChallenge.Evaluation
                 
                 //pieceSquareValue += LoopPieceList(plistKing, PieceSquareKingMidBlack);
             }
-
+            System.Console.WriteLine("pieceSquareValue: " + pieceSquareValue+ " " + isWhite );
             return pieceSquareValue;
         }
 
