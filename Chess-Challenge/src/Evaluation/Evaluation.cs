@@ -28,12 +28,10 @@ namespace ChessChallenge.Evaluation
             int opponentEval = CountMaterial(!isWhite, board);
 
             //Mobillity evaluation
-            
             myEval += MobilityScore(board);
             board.ForceSkipTurn();
             opponentEval += MobilityScore(board);
             board.UndoSkipTurn();
-            
             
             return myEval - opponentEval;
         }

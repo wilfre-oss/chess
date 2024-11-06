@@ -14,10 +14,12 @@ public class MyBot : IChessBot
     Board board;
     Timer timer;
     MoveGenerator moveGenerator;
+    TranspositionTable transpositionTable;
 
     Move bestMove;
     Move bestMoveInIteration;
     int iterationDepth;
+    int timeToThink = 1000;
 
     public Move Think(Board boardIn, Timer timerIn)
     {
@@ -25,7 +27,8 @@ public class MyBot : IChessBot
         timer = timerIn;
         bestMove = Move.NullMove;
         bestMoveInIteration = Move.NullMove;
-        moveGenerator = new MoveGenerator();
+        transpositionTable = new TranspositionTable(1000);
+        moveGenerator = new MoveGenerator(transpositionTable);
         int alpha = -int.MaxValue;
         int beta = int.MaxValue;
         int eval = 0;
@@ -38,7 +41,9 @@ public class MyBot : IChessBot
                 bestMove = bestMoveInIteration;
             }
         } catch
-        {
+        {   
+            bestMove = bestMoveInIteration;
+
             Console.WriteLine("depth: " + (iterationDepth - 1));
             Console.WriteLine(bestMove + " eval: " + eval);
             Console.WriteLine("Time to get move: " + timer.MillisecondsElapsedThisTurn + " ms");
@@ -50,7 +55,19 @@ public class MyBot : IChessBot
 
     int Search(int depth, int alpha, int beta)
     {
-        
+        if (transpositionTable.TryGet(board.ZobristKey, out TTEntry entry) && 
+            entry.Depth >= depth)
+        {
+            if (entry.Flag == FlagType.Exact)
+                return entry.Eval;
+            if (entry.Flag == FlagType.LowerBound)
+                alpha = entry.Eval;
+            else if (entry.Flag == FlagType.UpperBound)
+                beta = entry.Eval;
+            if (alpha >= beta)
+                return entry.Eval;
+        }
+
         if (depth == 0) return QuiscenceSearch(alpha, beta);
 
         List<Move> moves = GenerateMoves(board);
@@ -61,26 +78,35 @@ public class MyBot : IChessBot
         }
 
         if (iterationDepth - depth > 3 &&
-            timer.MillisecondsElapsedThisTurn > 1000)
+            timer.MillisecondsElapsedThisTurn > timeToThink)
         {
             throw new Exception();
         }
-        
+
+        FlagType flag = FlagType.UpperBound;
+        Move bestMoveThisPosition = Move.NullMove;
+
         foreach (Move move in moves)
         {
 
             board.MakeMove(move);
             int eval = -Search(depth - 1, -beta, -alpha);
             board.UndoMove(move);
+
             if(eval >= beta) {
                 if (!move.IsCapture)
                     moveGenerator.History[ColorIndex, move.StartSquare.Index, move.TargetSquare.Index] += depth * depth;
+
+                transpositionTable.Store(board.ZobristKey, depth, eval, move, FlagType.LowerBound);
+
                 return beta;
             };
 
             if(eval > alpha)
             {
                 alpha = eval;
+                flag = FlagType.Exact;
+                bestMoveThisPosition = move;
                 
                 if (depth == iterationDepth)
                 {
@@ -88,6 +114,9 @@ public class MyBot : IChessBot
                 }
             }
         }
+
+        transpositionTable.Store(board.ZobristKey, depth, alpha, bestMoveThisPosition, flag);
+
         return alpha;
     }
 
@@ -114,7 +143,7 @@ public class MyBot : IChessBot
         return alpha;
     }
     public static int Evaluate(Board board) => Evaluation.Evaluate(board);
-    List<Move> GenerateMoves(Board board, bool quietMoves = false) => moveGenerator.GenerateMoves(board, quietMoves);
+    List<Move> GenerateMoves(Board board, bool capturesOnly = false) => moveGenerator.GenerateMoves(board, capturesOnly);
 
     int ColorIndex => board.IsWhiteToMove ? 0 : 1;
 }

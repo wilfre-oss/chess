@@ -10,19 +10,34 @@
         static int MaterialValue(PieceType pieceType) => Material.MaterialValue(pieceType);
 
         public int[,,] History;
-
-        public MoveGenerator()
+        TranspositionTable TranspositionTable;
+        public MoveGenerator(TranspositionTable tt)
         {
             History = new int[2,64,64];
+            TranspositionTable = tt;
         }
-        public List<Move> GenerateMoves(Board board, bool quietMoves = false)
+        public List<Move> GenerateMoves(Board board, bool capturesOnly = false)
         {
             int colorIndex = board.IsWhiteToMove ? 0 : 1;
-            Move[] legalMoves = board.GetLegalMoves(quietMoves);
+            Move[] legalMoves = board.GetLegalMoves(capturesOnly);
             var movesWithScores = new List<(Move move, int score)>(legalMoves.Length);
+
+            Move pvMove = Move.NullMove;
+            if (TranspositionTable.TryGet(board.ZobristKey, out TTEntry entry) &&
+                entry.Flag == FlagType.Exact)
+            {
+                pvMove = entry.BestMove; 
+            }
 
             foreach (Move move in legalMoves)
             {
+                
+                if (move ==  pvMove)
+                {
+                    movesWithScores.Add((move, int.MaxValue));
+                    continue;
+                }
+
                 int score = History[colorIndex, move.StartSquare.Index, move.TargetSquare.Index];
 
                 if (move.IsCapture)
