@@ -18,6 +18,7 @@ public class MyBot : IChessBot
     Move bestMove;
     Move bestMoveInIteration;
     int iterationDepth;
+    int timeToThink = 100;
 
     public Move Think(Board boardIn, Timer timerIn)
     {
