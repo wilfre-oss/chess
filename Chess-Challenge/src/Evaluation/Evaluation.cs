@@ -183,6 +183,10 @@ namespace ChessChallenge.Evaluation
             int myEval = CountMaterial(isWhite, board);
             int opponentEval = CountMaterial(!isWhite, board);
 
+            //Piece position score
+            myEval += CountPieceSquare(isWhite, board);
+            opponentEval += CountPieceSquare(!isWhite, board);
+
             //Mobillity evaluation
             myEval += MobilityScore(board);
             board.ForceSkipTurn();
@@ -226,7 +230,7 @@ namespace ChessChallenge.Evaluation
                 pieceSquareValue += LoopPieceList(board.GetPieceList(PieceType.Bishop, isWhite), PieceSquareBishopsBlack);
                 pieceSquareValue += LoopPieceList(board.GetPieceList(PieceType.Rook, isWhite), PieceSquareRooksBlack);
                 pieceSquareValue += LoopPieceList(board.GetPieceList(PieceType.Queen, isWhite), PieceSquareQueenBlack);
-                pieceSquareValue += PieceSquareKingMidWhite[board.GetKingSquare(isWhite).Index];
+                pieceSquareValue += PieceSquareKingMidBlack[board.GetKingSquare(isWhite).Index];
 
                 //pieceSquareValue += LoopPieceList(plistKing, PieceSquareKingMidBlack);
             }

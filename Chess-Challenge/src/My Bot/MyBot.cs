@@ -27,7 +27,7 @@ public class MyBot : IChessBot
         timer = timerIn;
         bestMove = Move.NullMove;
         bestMoveInIteration = Move.NullMove;
-        transpositionTable = new TranspositionTable(1000);
+        transpositionTable = new TranspositionTable(64);
         moveGenerator = new MoveGenerator(transpositionTable);
         int alpha = -int.MaxValue;
         int beta = int.MaxValue;
@@ -50,7 +50,6 @@ public class MyBot : IChessBot
 
             return bestMove;
         }
-        
     }
 
     int Search(int depth, int alpha, int beta)
