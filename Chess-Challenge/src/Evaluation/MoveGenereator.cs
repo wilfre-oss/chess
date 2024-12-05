@@ -1,35 +1,74 @@
 ﻿namespace ChessChallenge.Evaluation
 {
     using ChessChallenge.API;
+    using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     public class MoveGenerator
     {
         static int MaterialValue(PieceType pieceType) => Material.MaterialValue(pieceType);
-        public static IEnumerable<Move> GenerateMoves(Board board)
+
+        public int[,,] History;
+        TranspositionTable TranspositionTable;
+        public MoveGenerator(TranspositionTable tt)
         {
+            History = new int[2,64,64];
+            TranspositionTable = tt;
+        }
+        public List<Move> GenerateMoves(Board board, bool capturesOnly = false)
+        {
+            int colorIndex = board.IsWhiteToMove ? 0 : 1;
+            Move[] legalMoves = board.GetLegalMoves(capturesOnly);
+            var movesWithScores = new List<(Move move, int score)>(legalMoves.Length);
 
-
-            return board.GetLegalMoves().Select(move =>
+            Move pvMove = Move.NullMove;
+            if (TranspositionTable.TryGet(board.ZobristKey, out TTEntry entry) &&
+                entry.Flag == FlagType.Exact)
             {
-                int score = 0;
+                pvMove = entry.BestMove; 
+            }
+
+            foreach (Move move in legalMoves)
+            {
+                
+                if (move ==  pvMove)
+                {
+                    movesWithScores.Add((move, int.MaxValue));
+                    continue;
+                }
+
+                int score = History[colorIndex, move.StartSquare.Index, move.TargetSquare.Index];
 
                 if (move.IsCapture)
                 {
+                    // Adjust score based on capture value
                     score += 10 * MaterialValue(move.CapturePieceType) - MaterialValue(move.MovePieceType);
                 }
 
-                if (board.SquareIsAttackedByOpponent(move.TargetSquare))
+                // Penalize moves that place the piece on an attacked square
+                if (score > 0 && board.SquareIsAttackedByOpponent(move.TargetSquare))
                 {
-                    score -= MaterialValue(move.MovePieceType);
+                    score -= 50;
                 }
 
-                return (move, score);
-            })
-                .OrderByDescending(x => x.score)
-                .Select(x => x.move);
+                movesWithScores.Add((move, score));
+            }
+
+            // Sort moves based on score (descending)
+            movesWithScores.Sort((a, b) => b.score.CompareTo(a.score));
+
+            // Return moves after sorting
+            var sortedMoves = new List<Move>(movesWithScores.Count);
+            foreach (var (move, _) in movesWithScores)
+            {
+                sortedMoves.Add(move);
+            }
+
+            return sortedMoves;
         }
+
+        
 
     }
 }

@@ -177,17 +177,19 @@ namespace ChessChallenge.Evaluation
 
         public static int Evaluate(Board board)
         {
-            int whiteEval = CountMaterial(true, board);
-            int blackEval = CountMaterial(false, board);
-            whiteEval += CountPieceSquare(true, board);
-            blackEval += CountPieceSquare(false, board);
+            bool isWhite = board.IsWhiteToMove;
 
+            //Material evaulation
+            int myEval = CountMaterial(isWhite, board);
+            int opponentEval = CountMaterial(!isWhite, board);
 
-
-            int eval = (whiteEval - blackEval);
-
-
-            return eval * (board.IsWhiteToMove ? 1 : -1);
+            //Mobillity evaluation
+            myEval += MobilityScore(board);
+            board.ForceSkipTurn();
+            opponentEval += MobilityScore(board);
+            board.UndoSkipTurn();
+            
+            return myEval - opponentEval;
         }
 
         static int CountMaterial(bool isWhite, Board board)
@@ -240,6 +242,38 @@ namespace ChessChallenge.Evaluation
             }
             return value;
 
+        }
+
+        static int MobilityScore(Board board)
+        {
+            Move[] moves = board.GetLegalMoves();
+
+            int score = 0;
+
+            for(int i = 0; i < moves.Length; i++)
+            {
+                if (moves[i].MovePieceType == PieceType.Pawn ||
+                    moves[i].MovePieceType == PieceType.Queen)
+                    continue;
+                score++;
+            }
+
+            return (int)Math.Sqrt(score) * 10;
+        }
+
+        static int ForceKingToCorner(Square friendlyKingSquare, Square oppenentKingSquare)
+        {
+            int eval = 0;
+            
+            int opponentKingDistanceToCenter =  Math.Max(3 - oppenentKingSquare.File, oppenentKingSquare.File - 4) +
+                                                Math.Max(3 - oppenentKingSquare.Rank, oppenentKingSquare.Rank - 4);
+            eval += opponentKingDistanceToCenter * 10;
+            
+            int distanceBetweenKings = Math.Abs(friendlyKingSquare.File - oppenentKingSquare.File) +
+                                        Math.Abs(friendlyKingSquare.Rank - oppenentKingSquare.Rank);
+            eval += (14 - distanceBetweenKings) * 4;
+
+            return eval;
         }
     }
 }
