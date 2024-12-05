@@ -20,6 +20,9 @@ namespace ChessChallenge.Evaluation
             QUEEN => 900,
             _ => 0,
         };
-        
+
+
+
+
     }
 }
