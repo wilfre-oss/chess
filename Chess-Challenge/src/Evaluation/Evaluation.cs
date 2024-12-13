@@ -1,4 +1,5 @@
 ﻿using ChessChallenge.API;
+
 using Raylib_cs;
 using System;
 using System.Collections.Generic;
@@ -184,16 +185,27 @@ namespace ChessChallenge.Evaluation
             int opponentEval = CountMaterial(!isWhite, board);
 
             //Piece position score
-            myEval += CountPieceSquare(isWhite, board);
-            opponentEval += CountPieceSquare(!isWhite, board);
+            //myEval += CountPieceSquare(isWhite, board);
+            //opponentEval += CountPieceSquare(!isWhite, board);
 
-            //Mobillity evaluation
-            myEval += MobilityScore(board);
-            board.ForceSkipTurn();
-            opponentEval += MobilityScore(board);
-            board.UndoSkipTurn();
-            
+            ////Mobillity evaluation
+            //myEval += MobilityScore(board);
+            //board.ForceSkipTurn();
+            //opponentEval += MobilityScore(board);
+            //board.UndoSkipTurn();
+
             return myEval - opponentEval;
+        }
+
+        public static double EvaluateMCTS(Board board)
+        {
+            bool isWhite = board.IsWhiteToMove;
+
+            //Material evaulation
+            int myEval = CountMaterial(isWhite, board);
+            int opponentEval = CountMaterial(!isWhite, board);
+
+            return Math.Clamp((double)(myEval - opponentEval) / 2000.0, -1.0, 1.0);
         }
 
         static int CountMaterial(bool isWhite, Board board)
