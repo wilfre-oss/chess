@@ -12,7 +12,7 @@ namespace ChessChallenge.Example
     using System.ComponentModel.Design.Serialization;
     using System.Diagnostics.CodeAnalysis;
 
-    public class EvilBots : IChessBot
+    public class EvilBot2 : IChessBot
     {
         Board board;
         bool isRootWhite;
@@ -63,7 +63,7 @@ namespace ChessChallenge.Example
             while (timer.MillisecondsElapsedThisTurn < 2000)
             {
                 Node leaf = Search(root);
-                double eval = -Rollout(-1.0, 1.0);
+                double eval = Rollout(-1.0, 1.0);
                 Backpropagate(leaf, eval);
             }
 
