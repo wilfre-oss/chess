@@ -44,10 +44,6 @@ public class MyBot : IChessBot
         {   
             bestMove = bestMoveInIteration;
 
-            Console.WriteLine("depth: " + (iterationDepth - 1));
-            Console.WriteLine(bestMove + " eval: " + eval);
-            Console.WriteLine("Time to get move: " + timer.MillisecondsElapsedThisTurn + " ms");
-
             return bestMove;
         }
     }
@@ -74,6 +70,10 @@ public class MyBot : IChessBot
         {
             return (board.IsInCheck()) ? 
                 -(100_000 + depth) : 0;
+        }
+        if (board.IsRepeatedPosition())
+        {
+            return 0;
         }
 
         if (iterationDepth - depth > 3 &&

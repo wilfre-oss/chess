@@ -12,7 +12,7 @@ namespace ChessChallenge.Example
     using System.ComponentModel.Design.Serialization;
     using System.Diagnostics.CodeAnalysis;
 
-    public class EvilBots : IChessBot
+    public class EvilBot : IChessBot
     {
         Board board;
         bool isRootWhite;
@@ -73,21 +73,25 @@ namespace ChessChallenge.Example
             foreach (Node child in root.children)
             {
                 board.MakeMove(child.move);
-                foreach (Node grandChild in child.children)
+                if (child.children != null)
                 {
-                    board.MakeMove(grandChild.move);
-                    tt.TryAdd(board.ZobristKey, grandChild);
-                    board.UndoMove(grandChild.move);
+                    foreach (Node grandChild in child.children)
+                    {
+                        board.MakeMove(grandChild.move);
+                        tt.TryAdd(board.ZobristKey, grandChild);
+                        board.UndoMove(grandChild.move);
+                    }
                 }
+                
                 board.UndoMove(child.move);
-                Console.WriteLine(child.move + " visits: " + child.visits + " value: " + child.value);
+                
                 if (child.visits > mostVisits)
                 {
                     mostVisits = child.visits;
                     bestMove = child.move;
                 }
             }
-
+            Console.WriteLine(board.PlyCount / 2 + " " + root.visits);
             return bestMove;
         }
 
