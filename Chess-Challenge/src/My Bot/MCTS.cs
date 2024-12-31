@@ -12,7 +12,7 @@ namespace ChessChallenge.Example
     using System.ComponentModel.Design.Serialization;
     using System.Diagnostics.CodeAnalysis;
 
-    public class EvilBo0t : IChessBot
+    public class MyBot : IChessBot
     {
         Board board;
         bool isRootWhite;
@@ -20,8 +20,8 @@ namespace ChessChallenge.Example
         Dictionary<ulong, Node> tt = new Dictionary<ulong, Node>();
         private class Node
         {
-            public int visits = 0;
-            public double value = 0;
+            public int visits;
+            public double value;
             public Move move;
             public Node[]? children;
             public Node? parent;
@@ -30,13 +30,24 @@ namespace ChessChallenge.Example
                 this.children = children;
                 this.parent = parent;
                 this.move = move;
+                this.value = 0;
+                this.visits = 0;
+            }
+            public Node(Node? parent, Move move, double value, Node[]? children = null)
+            {
+                this.children = children;
+                this.parent = parent;
+                this.move = move;
+                this.value = value;
+                this.visits = 0;
             }
         }
         public Move Think(Board board, Timer timer)
         {
             this.board = board;
             isRootWhite = board.IsWhiteToMove;
-            
+
+
             if (root != null)
             {
                 if (tt.TryGetValue(board.ZobristKey, out Node newRoot))
@@ -57,11 +68,9 @@ namespace ChessChallenge.Example
                 Expand(root, board.GetLegalMoves());
             }
 
-            while (timer.MillisecondsElapsedThisTurn < 5000)
+            while (timer.MillisecondsElapsedThisTurn < 250)
             {
-                Node leaf = Search(root);
-                double eval = Rollout(-1.0, 1.0);
-                Backpropagate(leaf, -eval);
+                Search(root);
             }
 
             int mostVisits = 0;
@@ -70,62 +79,85 @@ namespace ChessChallenge.Example
             foreach (Node child in root.children)
             {
                 board.MakeMove(child.move);
-                foreach (Node grandChild in child.children)
+                if (child.children != null)
                 {
-                    board.MakeMove(grandChild.move);
-                    tt.TryAdd(board.ZobristKey, grandChild);
-                    board.UndoMove(grandChild.move);
+                    foreach (Node grandChild in child.children)
+                    {
+                        board.MakeMove(grandChild.move);
+                        tt.TryAdd(board.ZobristKey, grandChild);
+                        board.UndoMove(grandChild.move);
+                    }
                 }
                 board.UndoMove(child.move);
-                Console.WriteLine(child.move + " visits: " + child.visits + " value: " + child.value);
                 if (child.visits > mostVisits)
                 {
                     mostVisits = child.visits;
                     bestMove = child.move;
                 }
             }
-
+            Console.WriteLine(board.PlyCount / 2 + " " + root.visits);
             return bestMove;
         }
 
-        Node Search(Node node)
+        
+        void Search(Node node)
         {
+            double eval = 0.0;
+            Move[] moves = new Move[128];
+           
             while (node.children != null)
             {
                 node = UCTSelction(node);
                 board.MakeMove(node.move);
             }
-            if (node.visits == 0) return node;
-
-            Move[] moves = board.GetLegalMoves();
-            if (moves.Length == 0) 
+            moves = board.GetLegalMoves();
+            if (moves.Length == 0)
             {
-                return node;
-            }
+                eval = board.IsInCheck() ? 1 : 0;
 
-            Expand(node, moves);
-            return Search(node);
+            }
+            else 
+            {
+                if (node.visits == 0)
+                {
+                    eval = Rollout(-1.0, 1.0);
+                }
+                else 
+                { 
+                    Expand(node, moves);
+                    int visits = node.children != null ? node.children.Length :  1;
+                    foreach(Node child in node.children)
+                    {
+                        board.MakeMove(child.move);
+
+                        if (board.GetLegalMoves().Length > 0)
+                        {
+                            eval += Rollout(-1.0, 1.0);
+                        }
+                        else { eval += board.IsInCheck() ? 1 : 0; }
+                        board.UndoMove(child.move);
+                    }
+                    Backpropagate(node, -eval, visits);
+                    return;
+                }
+            }
+                
+            
+            
+            Backpropagate(node, -eval);
         }
 
         double Rollout(double alpha, double beta)
         {
-            if (board.GetLegalMoves().Length == 0)
-            {
-                if (board.IsInCheck())
-                {
-                    return -1;
-                }
-                return 0;
-            }
-            Move[] moves = board.GetLegalMoves(true);
 
-            double eval = Evaluation.EvaluateMCTS(board); 
+            double eval = Evaluation.EvaluateMCTS(board);
 
             if (eval >= beta)
                 return beta;
             if (eval >= alpha)
                 alpha = eval;
 
+            Move[] moves = board.GetLegalMoves(true);
             for (int i = 0; i < moves.Length; i++)
             {
                 board.MakeMove(moves[i]);
@@ -138,7 +170,7 @@ namespace ChessChallenge.Example
             }
             return alpha;
         }
-        void Backpropagate (Node node, double value)
+        void Backpropagate(Node node, double value)
         {
             while (node.parent != null)
             {
@@ -152,7 +184,21 @@ namespace ChessChallenge.Example
             node.visits++;
         }
 
-        static Node UCTSelction (Node node)
+        void Backpropagate(Node node, double value, int visits)
+        {
+            while (node.parent != null)
+            {
+                board.UndoMove(node.move);
+                node.value += value;
+                node.visits += visits;
+                node = node.parent;
+                value = -value;
+            }
+            node.value += value;
+            node.visits += visits;
+        }
+
+        static Node UCTSelction(Node node)
         {
             double best = double.MinValue;
             Node next = node.children[0];
@@ -161,7 +207,7 @@ namespace ChessChallenge.Example
             {
                 if (child.visits == 0) return child;
 
-                double uct = (child.value / child.visits) + (2 * Math.Sqrt(Math.Log(node.visits) / child.visits));
+                double uct = (child.value / child.visits) + (Math.Sqrt(Math.Log(node.visits) / child.visits));
                 if (uct > best)
                 {
                     best = uct;
@@ -170,13 +216,13 @@ namespace ChessChallenge.Example
             }
             return next;
         }
-        
+
         void Expand(Node node, Move[] moves)
         {
             Node[] children = new Node[moves.Length];
             for (int i = 0; i < moves.Length; i++)
-            {
-                children[i] = new Node(node, moves[i], null);
+            {        
+                children[i] = new Node(node, moves[i]);
             }
             node.children = children;
         }

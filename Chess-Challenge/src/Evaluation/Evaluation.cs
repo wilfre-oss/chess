@@ -198,6 +198,7 @@ namespace ChessChallenge.Evaluation
             int myEval = CountMaterial(isWhite, board);
             int opponentEval = CountMaterial(!isWhite, board);
 
+            //Pawn scores
             int myPawnValue = PawnValue * board.GetPieceList(PieceType.Pawn, isWhite).Count;
             int opponentPawnValue = PawnValue * board.GetPieceList(PieceType.Pawn, !isWhite).Count;
             myEval += myPawnValue;
@@ -225,7 +226,7 @@ namespace ChessChallenge.Evaluation
             {
                 myEval += ForceKingToCorner(board.GetKingSquare(isWhite), board.GetKingSquare(!isWhite), opponentEndgameWeight);
             }
-            if (myMaterial + 200 < opponentMaterial)
+            else if (myMaterial + 200 < opponentMaterial)
             {
                 opponentEval += ForceKingToCorner(board.GetKingSquare(!isWhite), board.GetKingSquare(isWhite), myEndgameWeight);
             }
@@ -238,8 +239,9 @@ namespace ChessChallenge.Evaluation
 
         public static double EvaluateMCTS(API.Board board)
         {
-           
-            return Math.Clamp((double)(Evaluate(board)) / 2000.0, -1.0, 1.0);
+
+            double evalScore = (double)Evaluate(board);
+            return 1.0 / (1.0 + Math.Exp(-evalScore / 300.0));
         }
 
         static int CountMaterial(bool isWhite, API.Board board)

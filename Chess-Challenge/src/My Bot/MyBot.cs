@@ -9,7 +9,7 @@ using System.Diagnostics.CodeAnalysis;
 
 
 
-public class MyBot : IChessBot
+public class MyBotj : IChessBot
 {
     Board board;
     Timer timer;
@@ -19,7 +19,7 @@ public class MyBot : IChessBot
     Move bestMove;
     Move bestMoveInIteration;
     int iterationDepth;
-    int timeToThink = 1000;
+    int timeToThink = 100;
 
     public Move Think(Board boardIn, Timer timerIn)
     {
@@ -75,9 +75,9 @@ public class MyBot : IChessBot
             return (board.IsInCheck()) ? 
                 -(100_000 + depth) : 0;
         }
+        if (board.IsRepeatedPosition()) { return 0; }
 
-        if (iterationDepth - depth > 3 &&
-            timer.MillisecondsElapsedThisTurn > timeToThink)
+        if (timer.MillisecondsElapsedThisTurn > timeToThink)
         {
             throw new Exception();
         }
