@@ -20,7 +20,6 @@ public class MyBot : IChessBot
     Move bestMoveInIteration;
     int iterationDepth;
     int timeToThink = 1000;
-    int qdepth;
 
     public Move Think(Board boardIn, Timer timerIn)
     {
@@ -33,7 +32,7 @@ public class MyBot : IChessBot
         int alpha = -int.MaxValue;
         int beta = int.MaxValue;
         int eval = 0;
-        qdepth = 0;
+
         try
         {
             for (iterationDepth = 1; ; iterationDepth++)
@@ -129,7 +128,6 @@ public class MyBot : IChessBot
         if (eval > alpha)
             alpha = eval;
 
-        qdepth++;
         foreach (Move move in GenerateMoves(board, true))
         {
             board.MakeMove(move);
@@ -137,13 +135,11 @@ public class MyBot : IChessBot
             board.UndoMove(move);
             if (eval >= beta)
             {
-                qdepth--;
                 return beta;
             }
             if (eval > alpha)
                 alpha = eval;
         }
-        qdepth--;
         return alpha;
     }
     public static int Evaluate(Board board) => Evaluation.Evaluate(board);
