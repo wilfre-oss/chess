@@ -16,7 +16,7 @@
             History = new int[2,64,64];
             TranspositionTable = tt;
         }
-        public List<Move> GenerateMoves(Board board, bool capturesOnly = false)
+        public int GenerateMoves(Board board, Span<Move> movesBuffer, bool capturesOnly = false)
         {
             int colorIndex = board.IsWhiteToMove ? 0 : 1;
             Move[] legalMoves = board.GetLegalMoves(capturesOnly);
@@ -59,13 +59,11 @@
             movesWithScores.Sort((a, b) => b.score.CompareTo(a.score));
 
             // Return moves after sorting
-            var sortedMoves = new List<Move>(movesWithScores.Count);
-            foreach (var (move, _) in movesWithScores)
+            for (int i = 0; i < legalMoves.Length; i++)
             {
-                sortedMoves.Add(move);
+                movesBuffer[i] = movesWithScores[i].move;
             }
-
-            return sortedMoves;
+            return legalMoves.Length;
         }
 
         

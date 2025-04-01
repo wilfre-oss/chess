@@ -69,8 +69,9 @@ public class MyBot : IChessBot
 
         if (depth == 0) return QuiscenceSearch(alpha, beta);
 
-        List<Move> moves = GenerateMoves(board);
-        if (moves.Count == 0)
+        Span<Move> moves = stackalloc Move[218];
+        int moveCount = GenerateMoves(board, moves);
+        if (moveCount == 0)
         {
             return (board.IsInCheck()) ? 
                 -(100_000 + depth) : 0;
@@ -85,9 +86,9 @@ public class MyBot : IChessBot
         FlagType flag = FlagType.UpperBound;
         Move bestMoveThisPosition = Move.NullMove;
 
-        foreach (Move move in moves)
+        for (int i = 0; i < moveCount; i++)
         {
-
+            Move move = moves[i];
             board.MakeMove(move);
             int eval = -Search(depth - 1, -beta, -alpha);
             board.UndoMove(move);
@@ -128,8 +129,12 @@ public class MyBot : IChessBot
         if (eval > alpha)
             alpha = eval;
 
-        foreach (Move move in GenerateMoves(board, true))
+        Span<Move> moves = stackalloc Move[64];
+        int moveCount = GenerateMoves(board, moves, true);
+
+        for(int i = 0; i < moveCount; i++)
         {
+            Move move = moves[i];
             board.MakeMove(move);
             eval = -QuiscenceSearch(-beta, -alpha);
             board.UndoMove(move);
@@ -143,7 +148,7 @@ public class MyBot : IChessBot
         return alpha;
     }
     public static int Evaluate(Board board) => Evaluation.Evaluate(board);
-    List<Move> GenerateMoves(Board board, bool capturesOnly = false) => moveGenerator.GenerateMoves(board, capturesOnly);
+    int GenerateMoves(Board board, Span<Move> moveBuffer, bool capturesOnly = false) => moveGenerator.GenerateMoves(board, moveBuffer, capturesOnly);
 
     int ColorIndex => board.IsWhiteToMove ? 0 : 1;
 }
