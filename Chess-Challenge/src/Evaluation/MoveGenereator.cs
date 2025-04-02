@@ -3,11 +3,22 @@
     using ChessChallenge.API;
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel.DataAnnotations;
     using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     public class MoveGenerator
     {
         static int MaterialValue(PieceType pieceType) => Material.MaterialValue(pieceType);
+        readonly struct MoveScore
+        {
+            public readonly Move move;
+            public readonly int score;
+            public MoveScore(Move moveIn, int scoreIn)
+            {
+                move = moveIn;
+                score = scoreIn;
+            }
+        }
 
         public int[,,] History;
         TranspositionTable TranspositionTable;
@@ -20,7 +31,8 @@
         {
             int colorIndex = board.IsWhiteToMove ? 0 : 1;
             Move[] legalMoves = board.GetLegalMoves(capturesOnly);
-            var movesWithScores = new List<(Move move, int score)>(legalMoves.Length);
+            int length = legalMoves.Length;
+            Span<MoveScore> movesWithScore = stackalloc MoveScore[length];
 
             Move pvMove = Move.NullMove;
             if (TranspositionTable.TryGet(board.ZobristKey, out TTEntry entry) &&
@@ -29,12 +41,12 @@
                 pvMove = entry.BestMove; 
             }
 
-            foreach (Move move in legalMoves)
+            for (int i = 0; i < length; i++)
             {
-                
+                Move move = legalMoves[i];   
                 if (move ==  pvMove)
                 {
-                    movesWithScores.Add((move, int.MaxValue));
+                    movesWithScore[i] = new MoveScore(move, int.MaxValue);
                     continue;
                 }
 
@@ -52,16 +64,16 @@
                     score -= 50;
                 }
 
-                movesWithScores.Add((move, score));
+                movesWithScore[i] = new MoveScore(move, score);
             }
 
             // Sort moves based on score (descending)
-            movesWithScores.Sort((a, b) => b.score.CompareTo(a.score));
+            movesWithScore.Slice(0, length).Sort((a, b) => b.score.CompareTo(a.score));
 
             // Return moves after sorting
             for (int i = 0; i < legalMoves.Length; i++)
             {
-                movesBuffer[i] = movesWithScores[i].move;
+                movesBuffer[i] = movesWithScore[i].move;
             }
             return legalMoves.Length;
         }
